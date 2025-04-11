@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulador de Investimentos</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .form-container {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .form-container input, .form-container button {
+      width: 300px;
+      padding: 10px;
+      margin: 10px auto;
+      display: block;
+    }
+    .results-container {
+      display: none;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .table-container { width: 40%; }
+    .charts-container { width: 58%; }
+    table {
+      width: 100%; border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc; padding: 8px; text-align: center;
+    }
+    canvas {
+      width: 600pxF !important;
+      height: 350px !important;  /* Ajuste a altura para o gráfico */
+      margin-bottom: 30px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h1>Simulador de Investimentos</h1>
+    <input type="number" id="valor_investido" placeholder="Valor Mensal Investido (R$)">
+    <input type="number" id="taxa_cdi" placeholder="Taxa do CDI (% do CDI)">
+    <input type="number" id="valor_cdi" placeholder="Valor do CDI (em %)">
+    <input type="number" id="anos" placeholder="Quantidade de Anos">
+    <button onclick="calcularInvestimento()">Calcular e Gerar Resultados</button>
+  </div>
+
+  <div class="results-container" id="results">
+    <div class="table-container">
+      <h2>Resultados por Ano</h2>
+      <table id="resultados-tabela">
+        <thead>
+          <tr>
+            <th>Ano</th>
+            <th>Total Acumulado (R$)</th>
+            <th>Lucro Anual</th>
+            <th>Lucro Mensal</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="charts-container">
+      <h2>Gráficos</h2>
+      <canvas id="graficoTotalAcumulado"></canvas>
+      <canvas id="graficoLucroLiquido"></canvas>
+      <canvas id="graficoLucroMensal"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // Objeto para armazenar as instâncias dos gráficos
+    const graficos = {};
+
+    function calcularInvestimento() {
+      const b1 = parseFloat(document.getElementById('valor_investido').value);
+      const taxa_cdi = parseFloat(document.getElementById('taxa_cdi').value);
+      const cdi = parseFloat(document.getElementById('valor_cdi').value);
+      const anos = parseInt(document.getElementById('anos').value);
+
+      if (isNaN(b1) || isNaN(taxa_cdi) || isNaN(cdi) || isNaN(anos)) {
+        alert('Preencha todos os campos corretamente.');
+        return;
+      }
+
+      const investimento_anual = b1 * 12;
+      let total_acumulado = investimento_anual;
+      const historico = [];
+
+      for (let ano = 1; ano <= anos; ano++) {
+        const rendimento = Math.floor(total_acumulado * (cdi / 100 * taxa_cdi / 100));
+        const iof = ano === 1 ? rendimento * 0.96 : 0;
+        let ir = rendimento * (ano <= 1 ? 0.20 : ano <= 2 ? 0.175 : 0.15);
+        const rendimento_liquido = rendimento - ir - iof;
+        total_acumulado += rendimento_liquido + investimento_anual;
+        historico.push({
+          Ano: ano,
+          Total_Acumulado: total_acumulado,
+          Lucro_Anual: rendimento,
+          Lucro_Mensal: rendimento_liquido / 12
+        });
+      }
+
+      document.getElementById('results').style.display = 'flex';
+      const tabela = document.querySelector('#resultados-tabela tbody');
+      tabela.innerHTML = '';
+      historico.forEach((d) => {
+        let row = tabela.insertRow();
+        row.innerHTML = `
+          <td>${d.Ano}</td>
+          <td>${d.Total_Acumulado.toFixed(2)}</td>
+          <td>${d.Lucro_Anual.toFixed(2)}</td>
+          <td>${d.Lucro_Mensal.toFixed(2)}</td>`;
+      });
+
+      const anos_lista = historico.map(d => d.Ano);
+      const totais = historico.map(d => d.Total_Acumulado);
+      const lucros = historico.map(d => d.Lucro_Anual);
+      const lucros_mensais = historico.map(d => d.Lucro_Mensal);
+
+      // Atualiza os gráficos
+      gerarGrafico('graficoTotalAcumulado', 'Total Acumulado por Ano', anos_lista, totais);
+      gerarGrafico('graficoLucroLiquido', 'Lucro Anual por Ano', anos_lista, lucros);
+      gerarGrafico('graficoLucroMensal', 'Lucro Mensal por Ano', anos_lista, lucros_mensais);
+    }
+
+    function gerarGrafico(id, titulo, labels, dados) {
+      const ctx = document.getElementById(id).getContext('2d');
+
+      // Verifique se o gráfico já existe e destrua-o, se necessário
+      if (graficos[id]) {
+        graficos[id].destroy();
+      }
+
+      // Criação de um novo gráfico
+      try {
+        graficos[id] = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: titulo,
+              data: dados,
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,  // Deixa o gráfico mais flexível
+            plugins: {
+              title: {
+                display: true,
+                text: titulo
+              },
+              tooltip: {
+                enabled: true,  // Habilita tooltips
+                mode: 'index',  // Exibe o tooltip para o ponto que o mouse estiver
+                intersect: false  // Exibe o tooltip em qualquer ponto da linha
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  maxRotation: 45,  // Limita a rotação dos rótulos do eixo X
+                  minRotation: 30
+                }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return 'R$ ' + value.toLocaleString();  // Formatação dos valores no eixo Y
+                  }
+                }
+              }
+            },
+            layout: {
+              padding: {
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 10
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao criar gráfico: ', error);
+      }
+    }
+  </script>
+</body>
+</html>
