@@ -46,8 +46,8 @@
   <div class="form-container">
     <h1>Simulador de Investimentos</h1>
     <input type="number" id="valor_investido" placeholder="Valor Mensal Investido (R$)">
-    <input type="number" id="taxa_cdi" placeholder="Taxa do CDI (% do CDI)">
-    <input type="number" id="valor_cdi" placeholder="Valor do CDI (em %)">
+    <input type="number" id="taxa_cdi" placeholder="Taxa do CDI (%) (ex.: 100, 104, 125, 150...)">
+    <input type="number" id="valor_cdi" placeholder="Valor do CDI (%) (ex.: 12, 14.15, 14.25...)">
     <input type="number" id="anos" placeholder="Quantidade de Anos">
     <button onclick="calcularInvestimento()">Calcular e Gerar Resultados</button>
   </div>
@@ -127,8 +127,8 @@
 
       // Atualiza os gráficos
       gerarGrafico('graficoTotalAcumulado', 'Total Acumulado por Ano', anos_lista, totais);
-      gerarGrafico('graficoLucroLiquido', 'Lucro Anual por Ano', anos_lista, lucros);
-      gerarGrafico('graficoLucroMensal', 'Lucro Mensal por Ano', anos_lista, lucros_mensais);
+      gerarGrafico('graficoLucroLiquido', 'Lucro Anual', anos_lista, lucros);
+      gerarGrafico('graficoLucroMensal', 'Lucro Mensal', anos_lista, lucros_mensais);
     }
 
     function gerarGrafico(id, titulo, labels, dados) {
