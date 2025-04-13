@@ -35,10 +35,10 @@ function calcularInvestimento() {
   historico.forEach((d) => {
     let row = tabela.insertRow();
     row.innerHTML = `
-      <td>${d.Ano}</td>
-      <td>${d.Total_Acumulado.toFixed(2)}</td>
-      <td>${d.Lucro_Anual.toFixed(2)}</td>
-      <td>${d.Lucro_Mensal.toFixed(2)}</td>`;
+    <td>${d.Ano}</td>
+    <td>${d.Total_Acumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+    <td>${d.Lucro_Anual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+    <td>${d.Lucro_Mensal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
   });
 
   const anos_lista = historico.map(d => d.Ano);
